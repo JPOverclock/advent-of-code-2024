@@ -1,3 +1,5 @@
+package day1
+
 import kotlin.math.abs
 
 private fun parseInput(input: String): Pair<MutableList<Long>, MutableList<Long>> {
