@@ -21,7 +21,20 @@ fun part1(input: String): Long {
 }
 
 fun part2(input: String): Long {
-    return 0
+    val lab = parseInput(input)
+
+    // Get all positions and walked directions
+    val walkedPositions = simulate(lab)
+
+    // The idea is to, for each distinct walked position, add an obstacle immediately ahead if there are no obstacles
+    // on the position we want to add it in. We then simulate until one of the other walked positions is hit OR if
+    // the simulation ends. If a hit is confirmed, we consider the obstacle to result in a loop
+    return walkedPositions
+        .map { it.position.add(it.direction) }
+        .filter { !lab.obstacles.contains(it) && !lab.isOutsideBounds(it) }
+        .distinct()
+        .count { isSimulationLooping(lab, it) }
+        .toLong()
 }
 
 private fun parseInput(input: String): Lab {
@@ -67,4 +80,38 @@ private fun simulate(lab: Lab): Set<WalkedPosition> {
     }
 
     return walkedPositions
+}
+
+private fun isSimulationLooping(lab: Lab, newObstacle: Position): Boolean {
+    var guard = lab.initialPosition
+    val obstacles = mutableSetOf<Position>()
+    val directions = listOf(Position(-1, 0), Position(0, 1), Position(1, 0), Position(0, -1))
+    var direction = 0
+
+    val walkedPositions = mutableSetOf<WalkedPosition>()
+
+    obstacles.addAll(lab.obstacles)
+    obstacles.add(newObstacle)
+
+    walkedPositions.add(WalkedPosition(guard, directions[direction]))
+
+    while (true) {
+        if (lab.isOutsideBounds(guard)) return false
+
+        val next = guard.add(directions[direction])
+
+        if (obstacles.contains(next)) {
+            direction = (direction + 1) % 4
+        } else {
+            guard = next
+        }
+
+        val walkedPosition = WalkedPosition(guard, directions[direction])
+
+        if (walkedPositions.contains(walkedPosition)) {
+            return true
+        } else {
+            walkedPositions.add(walkedPosition)
+        }
+    }
 }
